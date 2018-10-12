@@ -1,0 +1,84 @@
+# linux-erorr
+Linux and64 -  reinstall it from i386 to amd64
+“live” upgrade.
+
+terminal   - dpkg --add-architecture amd64
+             apt-get update
+             apt-get install linux-image-generic:amd64
+             Reboot
+             
+             dpkg part
+
+apt-get install dpkg:amd64 apt:amd64
+Reading package lists… Done
+Building dependency tree 
+Reading state information… Done
+The following additional packages will be installed:
+ libapt-pkg5.0:amd64 libbz2–1.0:amd64 liblz4–1:amd64
+Suggested packages:
+ apt-doc:amd64 python-apt:amd64
+The following packages will be REMOVED:
+ apt apt-offline apt-utils dpkg ubuntu-extras-keyring ubuntu-minimal unattended-upgrades
+The following NEW packages will be installed:
+ apt:amd64 dpkg:amd64 libapt-pkg5.0:amd64 libbz2–1.0:amd64 liblz4–1:amd64
+WARNING: The following essential packages will be removed.
+This should NOT be done unless you know exactly what you are doing!
+ apt dpkg
+0 upgraded, 5 newly installed, 7 to remove and 0 not upgraded.
+Need to get 3,878 kB of archives.
+After this operation, 1,548 kB of additional disk space will be used.
+You are about to do something potentially harmful.
+To continue type in the phrase ‘Yes, do as I say!’
+ ?] Yes, do as I say!
+
+… and things go hard…
+
+…
+Removing dpkg (1.18.4ubuntu1) …
+dpkg: man-db: dependency problems, but processing triggers anyway as you requested:
+ man-db depends on dpkg (>= 1.16.1~); however:
+ Package dpkg is not installed.
+
+Processing triggers for man-db (2.7.5–1) …
+Could not exec dpkg!
+E: Sub-process /usr/bin/dpkg returned an error code (100)
+
+Yep. No more dpkg.
+
+# dpkg
+The program ‘dpkg’ is currently not installed. You can install it by typing:
+apt install dpkg
+# apt-get install dpkg
+Could not exec dpkg!
+E: Sub-process /usr/bin/dpkg returned an error code (100)
+
+Broken. As a heart. Good news: apt is still working.
+(note: I could reinstall Ubuntu — but it will be counted as a loss).
+
+We need to install dpkg:amd64 in the system. Or step back and fix dpkg:i386.
+
+I found deb-files in the apt cache:
+
+$ ls /var/cache/apt/archives/dpkg*
+/var/cache/apt/archives/dpkg_1.18.4ubuntu1_amd64.deb
+/var/cache/apt/archives/dpkg_1.18.4ubuntu1_i386.deb
+
+I decide to try easy path: extract old dpkg (binary) and use it:
+
+cp /var/cache/apt/archives/dpkg_1.18.4ubuntu1_i386.deb /tmp
+cd /tmp
+ar x dpkg_1.18.4ubuntu1_i386.deb
+tar xzf data.tar.gz
+cp usr/bin/* /usr/local/bin
+cp usr/sbin/* /usr/local/sbin
+cp sbin/* /usr/local/sbin
+
+It should copy many of dpkg subtools, like dpkg-split, dpkg-query, etc.
+
+(why usr/local? Because it is a directory you can put your local binaries into without conflicting with dpkg. Manually unpacked dpkg is ‘your local’, not ‘system’ binary, therefore should never goes to /usr/bin/, /sbin/, etc).
+
+After that I can exec dpkg normally:
+
+dpkg -l|grep dpkg
+rc dpkg 1.18.4ubuntu1 i386 Debian package management system
+
